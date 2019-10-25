@@ -3,6 +3,7 @@
 #include "memory.h"
 #include "time.h"
 #include "math.h"
+#include "stdbool.h"
 
 #define FINAL_SOLN
 void merge_array(void** arr, int startIdx1, int startIdx2, int arSize, void** tempArr,
@@ -72,31 +73,10 @@ typedef struct _POINT_
     long long int y;
 } POINT;
 
-int point_compare(void* ele1, void* ele2)
-{
-    POINT* pt1 = (POINT* )ele1;
-    POINT* pt2 = (POINT* )ele2;
-
-    if (pt1->x > pt2->x)
-        return 1;
-    else if (pt1->x < pt2->x)
-        return -1;
-    else
-    {
-        if (pt1->y > pt2->y)
-            return 1;
-        else if (pt1->y < pt2->y)
-            return -1;
-    }
-    return 0;
-}
-
-
-
 
 #define LL_INT_MAX (0x7FFFFFFFFFFFFFFF)
 #define MIN(a,b)   ((a <= b) ? a : b)
-
+#define ABS(a)     ((a < 0) ? -a : a)
 long long int distance_between_squared(POINT** points, unsigned int pt1Idx, unsigned int pt2Idx)
 {
     long long int distance = (points[pt1Idx]->x - points[pt2Idx]->x)*(points[pt1Idx]->x - points[pt2Idx]->x);
@@ -104,7 +84,7 @@ long long int distance_between_squared(POINT** points, unsigned int pt1Idx, unsi
     return distance;
 }
 
-double find_min_distance(POINT** points, unsigned int numPoints)
+double find_min_distance(POINT** points, unsigned int numPoints, bool ySort)
 {
     if (numPoints == 2)
     {
@@ -135,11 +115,16 @@ double find_min_distance(POINT** points, unsigned int numPoints)
 
             while (startSubAr1Idx >= arIdx)
             {
-                long long int xDistanceSquared
-                    = (points[startSubAr1Idx]->x - points[startSubAr2Idx]->x)
-                      *(points[startSubAr1Idx]->x - points[startSubAr2Idx]->x);
 
-                if (xDistanceSquared > minDistanceOfAllSubArr)
+                long long int distanceSquared;
+                if (!ySort)
+                    distanceSquared = (points[startSubAr1Idx]->x - points[startSubAr2Idx]->x)
+                        *(points[startSubAr1Idx]->x - points[startSubAr2Idx]->x);
+                else
+                    distanceSquared = (points[startSubAr1Idx]->y - points[startSubAr2Idx]->y)
+                        *(points[startSubAr1Idx]->y - points[startSubAr2Idx]->y);
+
+                if (distanceSquared > minDistanceOfAllSubArr)
                 {
                     if (startSubAr2Idx == (arIdx + subArSize/2))
                         break;
@@ -184,6 +169,45 @@ double find_min_distance_brute(POINT** points, unsigned int numPoints)
     return sqrt((double)minDistance);
 }
 
+
+int point_compare_x(void* ele1, void* ele2)
+{
+    POINT* pt1 = (POINT* )ele1;
+    POINT* pt2 = (POINT* )ele2;
+
+    if (pt1->x > pt2->x)
+        return 1;
+    else if (pt1->x < pt2->x)
+        return -1;
+    else
+    {
+        if (pt1->y > pt2->y)
+            return 1;
+        else if (pt1->y < pt2->y)
+            return -1;
+    }
+    return 0;
+}
+
+int point_compare_y(void* ele1, void* ele2)
+{
+    POINT* pt1 = (POINT* )ele1;
+    POINT* pt2 = (POINT* )ele2;
+
+    if (pt1->y > pt2->y)
+        return 1;
+    else if (pt1->y < pt2->y)
+        return -1;
+    else
+    {
+        if (pt1->x > pt2->x)
+            return 1;
+        else if (pt1->x < pt2->x)
+            return -1;
+    }
+    return 0;
+}
+
 int main(int argc, char** argv)
 {
     unsigned int numPoints;
@@ -209,8 +233,15 @@ int main(int argc, char** argv)
 #endif
     }
 
-    merge_sort((void** )points, numPoints, point_compare);
-    printf("%lf\n",find_min_distance(points, numPoints));
+    merge_sort((void** )points, numPoints, point_compare_x);
+    long long int xSpan = ABS(points[numPoints-1]->x - points[0]->x);
+    merge_sort((void** )points, numPoints, point_compare_y);
+    long long int ySpan = ABS(points[numPoints-1]->y - points[0]->y);
+    bool ySort = (ySpan > xSpan) ? true : false;
+    if (!ySort)
+        merge_sort((void** )points, numPoints, point_compare_x);
+
+    printf("%lf\n",find_min_distance(points, numPoints, ySort));
 #ifdef VALIDATE_SOLN
     printf("%lf\n",find_min_distance_brute(points, numPoints));
 #endif
