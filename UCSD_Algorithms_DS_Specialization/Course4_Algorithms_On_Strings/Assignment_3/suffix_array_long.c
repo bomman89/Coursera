@@ -3,21 +3,18 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define MAX_STR_LEN (2*1024*1024)
+#define MAX_STR_LEN (2*100000)
 
 typedef struct _SUFFIX_ARR_ELEMENT_
 {
     unsigned int suffixIdx;
 } SUFFIX_ARR_ELEMENT;
 char* gInputStr;
-
+unsigned int gMaxClassNum=4;
 void suffix_arr_sort_double(unsigned int* countArr, unsigned int* classes, unsigned int* newClasses,
                             unsigned int* suffixOrder, unsigned int* newSuffixOrder, unsigned int subStrLen)
 {
-    for (unsigned int i=0; i<strlen(gInputStr); i++)
-        countArr[classes[i]]++;
-
-    for (unsigned int i=1; i<strlen(gInputStr); i++)
+    for (unsigned int i=1; i<(gMaxClassNum+1); i++)
         countArr[i] = countArr[i] + countArr[i-1];
 
     int newSuffixIdx=0;
@@ -29,7 +26,9 @@ void suffix_arr_sort_double(unsigned int* countArr, unsigned int* classes, unsig
         newSuffixOrder[countArr[classes[newSuffixIdx]]]=newSuffixIdx;
     }
 
+    memset(countArr, 0, sizeof(unsigned int)*(gMaxClassNum+1));
     newClasses[newSuffixOrder[0]] = 0;
+    countArr[0]++;
     for (unsigned int i=1; i<strlen(gInputStr); i++)
     {
         if (classes[newSuffixOrder[i]] != classes[newSuffixOrder[i-1]]) {
@@ -44,6 +43,10 @@ void suffix_arr_sort_double(unsigned int* countArr, unsigned int* classes, unsig
             else
                 newClasses[newSuffixOrder[i]] = newClasses[newSuffixOrder[i-1]];
         }
+
+        countArr[newClasses[newSuffixOrder[i]]]++;
+        if (newClasses[newSuffixOrder[i]] > gMaxClassNum)
+            gMaxClassNum = newClasses[newSuffixOrder[i]];
     }
 }
 
@@ -114,9 +117,12 @@ int main(int argc, void** argv)
     }
 
     bool classArrSel=true;
+    memset(countArr, 0, sizeof(unsigned int)*(gMaxClassNum+1));
+    for (unsigned int i=0; i<strlen(gInputStr); i++)
+        countArr[classes[i]]++;
+
     for (unsigned int subStrLen=1; subStrLen<=strlen(gInputStr); subStrLen*=2)
     {
-        memset(countArr, 0, sizeof(unsigned int)*strlen(gInputStr));
         if (classArrSel)
             suffix_arr_sort_double(countArr, classes, newClasses, suffixOrder, newSuffixOrder, subStrLen);
         else

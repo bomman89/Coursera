@@ -2,51 +2,64 @@
 #include "stdlib.h"
 #include "string.h"
 
-#define MAX_PATTERN_PLUS_GENOME_LEN (2*1024*1024)
+#define MAX_PATTERN_LEN (1*1000*1000)
+#define MAX_GENOME_LEN (1*1000*1000)
+
 int main(int argc, char** argv)
 {
-    char* patternGenome;
-    unsigned long long int patternLen;
-    unsigned long long int* lcpArr;
+    char* pattern;
+    char* genome;
+    unsigned int patternLen;
+    unsigned int genomeLen;
+    unsigned int* lcpArr;
 
-    patternGenome = (char* )malloc(sizeof(char)*(MAX_PATTERN_PLUS_GENOME_LEN+4));
-    scanf("%s",patternGenome);
-    patternLen = strlen(patternGenome);
-    patternGenome[patternLen] = '$';
-    scanf("%s",&patternGenome[patternLen+1]);
-    unsigned long long int patternGenomeLen = strlen(patternGenome);
+    pattern = (char* )malloc(sizeof(char)*(MAX_PATTERN_LEN+1));
+    genome = (char* )malloc(sizeof(char)*(MAX_PATTERN_LEN+1));
+    scanf("%s",pattern);
+    scanf("%s",genome);
+    patternLen = strlen(pattern);
+    pattern[patternLen] = '$';
+    genomeLen = strlen(genome);
 
-    if (patternLen > (patternGenomeLen-patternLen-1))
+    if ((patternLen-1) > genomeLen)
         return 0;
 
-    lcpArr = (unsigned long long int* )malloc(sizeof(unsigned long long int)*(patternLen+4));
-    memset(lcpArr, 0, (sizeof(unsigned long long int)*(patternLen+4)));
+    lcpArr = (unsigned int* )malloc(sizeof(unsigned int)*(patternLen+1));
+    memset(lcpArr, 0, (sizeof(unsigned int)*(patternLen+1)));
 
-    long long int border = 0;
-    for (long long int i=1; i<strlen(patternGenome); i++)
+    unsigned int border=0;
+    for (unsigned int i=1; i<(patternLen+1); i++)
     {
-        if (patternGenome[i] == patternGenome[border])
-            border = border + 1;
+        while ((border>0) && (pattern[i] != pattern[border]))
+            border = lcpArr[border-1];
+
+        if (pattern[i] == pattern[border])
+            border = border+1;
         else
-        {
-            while ((border>0) && (patternGenome[i] != patternGenome[border]))
-                border = lcpArr[border-1];
+            border = 0;
 
-            if (patternGenome[i] == patternGenome[border])
-                border = border+1;
-            else
-                border = 0;
-        }
+        lcpArr[i] = border;
+    }
 
-        if (i <= patternLen)
-            lcpArr[i] = border;
+
+    border = 0;
+    for (unsigned int i=0; i<genomeLen; i++)
+    {
+        while ((border>0) && (genome[i] != pattern[border]))
+            border = lcpArr[border-1];
+
+        if (genome[i] == pattern[border])
+            border = border+1;
+        else
+            border = 0;
 
         if (border == patternLen)
-            printf("%lld ",i-(2*patternLen));
+            printf("%d ",(i-patternLen+1));
 
     }
 
-    free(patternGenome);
+    free(pattern);
+    free(genome);
     free(lcpArr);
 
     return 0;
